@@ -1,0 +1,13 @@
+#copay
+server {
+        listen 9014;
+        root html;
+        index index.html index.htm;
+
+        location / {
+           proxy_pass http://localhost:3005;
+        }
+        location ^~ /copay {
+           proxy_pass http://member-uat.test-cignacmb.com/copay;
+        }
+}

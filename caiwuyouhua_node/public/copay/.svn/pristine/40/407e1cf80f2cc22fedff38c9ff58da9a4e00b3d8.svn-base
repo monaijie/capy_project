@@ -1,0 +1,211 @@
+/**
+ * Created by wufan on 17/8/16.
+ */
+
+$("#commitForm").click(function () {
+    var model = {
+        Insurance_type: '',
+        number: '',
+        policy_name: '',
+        applicant_name: '',
+        pay: ''
+    };
+    model.Insurance_type = $('#Insurance_type').val();
+    model.number = $('#number').val();
+    model.policy_name = $('#policy_name').text();
+    model.applicant_name = $('#applicant_name').text();
+    model.pay = $('#pay').val();
+    console.log(model);
+    if (model.Insurance_type == "请选择") {
+        tips_msg("请选择保单类型");
+        return
+    }
+    if (model.number == "") {
+        tips_msg("请输入会员号或保单号");
+        return
+    }
+    if (model.pay == "") {
+        tips_msg("请输入正确的支付金额");
+        return
+    }
+    if (model.Insurance_type != "请选择" && model.number != "" && model.pay != "") {
+        $('#type').text(model.Insurance_type);
+        $('#InsureNumber').text(model.number);
+        $('#InsureName').text(model.policy_name);
+        $('#recognizeeName').text(model.applicant_name);
+        $('#payment').text(model.pay);
+        $("#preview").css("display", "block");
+        return
+    }
+
+});
+
+$("#clearPay").click(function () {
+    $("#pay").val("");
+});
+$("#clearInsuranceNumber").click(function () {
+    $("#number").val("");
+});
+$("#tips").click(function () {
+    $("#tips").css("display", "none")
+});
+
+$("#commitPay").click(function () {
+    $("#preview").css("display", "none");
+});
+
+
+//监听保单类型
+var InsuranceTypechange = function (callback) {
+    var Insuranceype = $('#Insurance_type').val();
+    var policyType = null;
+    if (Insuranceype == '高端医疗险') {
+        policyType = 'GHB'
+    }else if (Insuranceype == '团体医疗险') {
+        policyType = 'NGB'
+    }else if (Insuranceype == '个人高端医疗险') {
+        policyType = 'IPMI'
+    }
+    if(callback){
+        callback(policyType)
+    }
+    return policyType
+};
+//强制先选择报单类型
+var clearnumber = function () {
+    var Insuranceype = $('#Insurance_type').val();
+    if (Insuranceype == '请选择') {
+        tips_msg("请先选择保单类型");
+        $("#number").val('')
+    }
+};
+//监听会员号或保单号
+var numberFilling = function(callback) {
+    var number = $("#number").val();
+    if (number != "") {
+        $("#clearInsuranceNumber").css("display", "block")
+    } else {
+        $("#clearInsuranceNumber").css("display", "none")
+    }
+    if(callback){
+        callback(number)
+    }
+    return number
+};
+var InsuranceType = function () {
+    InsuranceTypechange(function (type) {
+        numberFilling(function (number) {
+            if(number != '' && type != null){
+                getUserIfor(type, number)
+            }
+        })
+    });
+
+    // var type = InsuranceTypechange();
+    // var number = numberFilling();
+    // if(number != '' && type != null){
+    //     getUserIfor(type, number)
+    // }
+};
+
+//获取用户信息
+var getUserIfor = function (type, number) {
+    console.log(type,number);
+    var dataToPost = {
+        policyType: type,
+        numNo: number
+    };
+    goToPayOrder(dataToPost, function (data) {
+        if (data.respCode == '00') {
+            alert('成功')
+        } else {
+            // alert('用户信息错误')
+            alert(data.msg)
+        }
+    }, function (res) {
+
+    })
+};
+//获取支付订单信息接口
+function goToPayOrder(json, success, fail) {
+    $.ajax({
+        url: 'http://member-test.cignacmb.com/copay/getInfo',
+        type: 'post',
+        timeout: 180000,
+        data: json,
+        dataType: 'json',
+        success: function (data) {
+            handleExpired(data);
+            success(data)
+        },
+        error: function (res, error) {
+            fail(res)
+            showAlert('系统超时，请重试')
+        }
+    });
+}
+
+//显示隐藏弹窗
+function tips_msg(value) {
+    $("#msg").text(value);
+    $("#tips").css("display", "block")
+}
+//监听金额变化
+function PayrChange() {
+    var pay = $("#pay").val();
+
+    pay = keepOnlyNumber(pay);
+    $("#pay").val(pay)
+    if (pay != "") {
+        $("#clearPay").css("display", "block")
+    } else {
+        $("#clearPay").css("display", "none")
+
+    }
+}
+//数字与小数点
+function keepOnlyNumber(value) {
+    value = value.toString();
+    var newstr;
+    // var regexp = /[^\d]]*/g;
+    var regexp = /[^0-9\/.]*/g;
+    newstr = value.replace(regexp, "");
+    return newstr
+}
+//接口弹出窗
+function showAlert(msg) {
+    tips_msg(msg);
+    // if (window.alertModal) {
+    //     window.alertModal.open(msg)
+    // } else {
+    //     setTimeout(function () {
+    //         // window.alertModal.open(msg)
+    //     }, 1000)
+    // }
+}
+function handleExpired(data) {
+    if (data.statusCode == -401) {
+        setTimeout(function () {
+            // location.href = 'index.html'
+        }, 3000)
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

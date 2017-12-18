@@ -1,0 +1,320 @@
+/**
+ * Created by wufan on 17/8/16.
+ */
+
+$("#commitForm").click(function () {
+    var model = {
+        Insurance_type: '',
+        number: '',
+        policy_name: '',
+        applicant_name: '',
+        pay: ''
+    };
+    model.Insurance_type = $('#Insurance_type').val();
+    model.number = $('#number').val();
+    model.policy_name = $('#policy_name').text();
+    // model.applicant_name = $('#applicant_name').text();
+    model.pay = $('#pay').val();
+    console.log(model);
+    if (model.Insurance_type == "请选择") {
+        tips_msg("请选择保单类型");
+        return
+    }
+    if (model.number == "") {
+        tips_msg("请输入会员号或保单号");
+        return
+    }
+    if (model.pay == "") {
+        tips_msg("请输入正确的支付金额");
+        return
+    }
+    InsuranceTypechange(function (type) {
+        numberFilling(function (number) {
+            if (number != '' && type != null) {
+                getUserInfo(type,number,function (name) {
+                    for(var i=0 ; i <name.insured.length;i++){
+                        model.applicant_name += name.insured[i];
+                        if(i<name.insured.length-1){
+                            model.applicant_name += ","
+                        }
+                    }
+                    recognizeeName.innerHTML = model.applicant_name;
+                    console.log("CLICKCOMMITFORM");
+                    console.log(recognizeeName.innerHTML)
+                })
+            }
+        })
+    });
+    if (model.Insurance_type != "请选择" && model.number != "" && model.pay != "") {
+        $('#type').text(model.Insurance_type);
+        $('#InsureNumber').text(model.number);
+        $('#InsureName').text(model.policy_name);
+        $('#payment').text(model.pay);
+        $("#preview").css("display", "block");
+    }
+});
+//点击确认提交
+$("#commitPay").click(function () {
+    var model = {
+        policyType: '',
+        numNo: '',
+        holder: '',
+        insured: '',
+        amount: ''
+    };
+
+    var TypeInsurance = $('#Insurance_type').val();
+    model.numNo = $('#number').val();
+    model.holder = $('#policy_name').text();
+    model.amount = $('#pay').val();
+    if (TypeInsurance == '高端医疗险') {
+        model.policyType = 'GHB';
+    } else if (TypeInsurance == '团体医疗险') {
+        model.policyType = 'NGB';
+    } else if (TypeInsurance == '个人高端医疗险') {
+        model.policyType = 'IPMI';
+    }
+    getUserInfo(model.policyType , model.numNo ,function (name) {
+        for(var i=0 ; i <name.insured.length;i++){
+            model.insured += name.insured[i];
+            if(i<name.insured.length-1){
+                model.insured += ","
+            }
+        }
+        console.log(model);
+        placeDrder(model);
+    });
+    $("#preview").css("display", "none");
+});
+//点击清除金额
+$("#clearPay").click(function () {
+    $("#pay").val("");
+});
+//点击清除会员号
+$("#clearInsuranceNumber").click(function () {
+    $("#number").val("");
+});
+//点击隐藏提示
+$("#tips").click(function () {
+    $("#tips").css("display", "none")
+});
+//监听保单类型
+var InsuranceTypechange = function (callback) {
+    var Insuranceype = $('#Insurance_type').val();
+    var policyType = null;
+    if (Insuranceype == '高端医疗险') {
+        policyType = 'GHB'
+    } else if (Insuranceype == '团体医疗险') {
+        policyType = 'NGB'
+    } else if (Insuranceype == '个人高端医疗险') {
+        policyType = 'IPMI'
+    }
+    if (callback) {
+        callback(policyType)
+    }
+    console.log(policyType);
+};
+//强制先选择报单类型
+var clearnumber = function () {
+    var Insuranceype = $('#Insurance_type').val();
+    if (Insuranceype == '请选择') {
+        tips_msg("请先选择保单类型");
+        $("#number").val('')
+    }
+};
+//监听会员号或保单号
+var numberFilling = function (callback) {
+    var number = $("#number").val();
+    if (number != "") {
+        $("#clearInsuranceNumber").css("display", "block")
+    } else {
+        $("#clearInsuranceNumber").css("display", "none")
+    }
+    if (callback) {
+        callback(number)
+    }
+    console.log(number)
+};
+//输入框失去焦点后调用接口
+var InsuranceType = function () {
+    InsuranceTypechange(function (type) {
+        numberFilling(function (number) {
+            if (number != '' && type != null) {
+                getUserInfo(type,number,function (name) {
+                    typeDisplayName(type,name);
+                })
+            }
+        })
+    });
+};
+//获取被保人姓名
+var getUserInfo = function (type,number,callback) {
+    var dataToPost = {
+        policyType: type,
+        numNo: number
+    };
+    getInfo(dataToPost,function (data) {
+        if (data.respCode == '00') {
+            if(callback){
+                callback(data.respData)
+            }
+           console.log(data.respData.insured)
+           console.log(data.respData.holder)
+        }else{
+           tips_msg('信息有误')
+        }
+    },function (error) {
+        console.log(error)
+    });
+};
+//获取支付订单信息接口
+function getInfo(json, success, fail) {
+    $.ajax({
+        url: '/copay/getInfo',
+        type: 'post',
+        timeout: 180000,
+        data: json,
+        dataType: 'json',
+        success: function (data) {
+            console.log("getInfo:success")
+            success(data)
+        },
+        error: function (res) {
+            console.log("getInfo:fail")
+            fail(res);
+            showAlert('系统超时，请重试')
+        }
+    });
+}
+//点击提交调用函数
+var placeDrder = function (model) {
+    var dataToPost = model;
+    console.log('placeDrder:function')
+    console.log(dataToPost)
+    submitInfo(dataToPost,function (data) {
+        if (data.respCode == '00') {
+            location.href = data.respData;
+            console.log('提交成功')
+        }else{
+            tips_msg('信息有误')
+        }
+    },function (error) {
+        console.log(error)
+    });
+};
+//提交信息接口
+function submitInfo(json, success, fail) {
+    $.ajax({
+        url: '/copay/submitInfo',
+        type: 'post',
+        timeout: 180000,
+        data: json,
+        dataType: 'json',
+        success: function (data) {
+            console.log("submitInfo:success")
+            success(data)
+        },
+        error: function (res) {
+            console.log("submitInfo:fail")
+            fail(res);
+            showAlert('系统超时，请重试')
+        }
+    });
+}
+//动态显示被保人信息
+var InsuredOption = function (name) {
+    var momo = name;
+    var sel = document.getElementById("select");
+    var option = '';
+    for (var i = 0; i < momo.length; i++) {
+        option = new Option(momo[i], i);
+        sel.options.add(option);
+    }
+};
+//判断保单类型显示被保人名称
+var typeDisplayName = function (type, name) {
+    if (type == 'IPMI') {
+        InsurancenameOne.style.display = 'none';
+        InsurancenameTwo.style.display = 'block';
+        InsuredOption(name.insured);
+    } else {
+        InsurancenameOne.style.display = 'block';
+        InsurancenameTwo.style.display = 'none';
+        applicant_name.innerHTML = name.insured[0];
+
+    }
+    policy_name.innerHTML = name.holder;
+
+};
+//显示隐藏弹窗
+function tips_msg(value) {
+    $("#msg").text(value);
+    $("#tips").css("display", "block");
+    setTimeout(function () {
+        document.getElementById("tips").style.display = 'none';
+    },2000)
+}
+//监听金额变化
+function PayrChange() {
+    var pay = $("#pay").val();
+
+    pay = keepOnlyNumber(pay);
+    $("#pay").val(pay)
+    if (pay != "") {
+        $("#clearPay").css("display", "block")
+    } else {
+        $("#clearPay").css("display", "none")
+
+    }
+}
+//数字与小数点
+function keepOnlyNumber(value) {
+    value = value.toString();
+    var newstr;
+    // var regexp = /[^\d]]*/g;
+    var regexp = /[^0-9\/.]*/g;
+    newstr = value.replace(regexp, "");
+    return newstr
+}
+//接口弹出窗
+function showAlert(msg) {
+    tips_msg(msg);
+}
+
+
+// // 本地储存
+// var setLocalStorage = function (model) {
+//     console.log('CONTROLLER:setLocalStorage：缓存数据');
+//     console.log(model.pay)
+//     var sur_data_type = model.Insurance_type,
+//         sur_data_nun = model.number,
+//         sur_data_policy = model.policy_name,
+//         sur_data_applicant = model.applicant_name,
+//         sur_data_par = model.pay;
+//      localStorage.setItem("sur_data_type", JSON.stringify(sur_data_type));
+//      localStorage.setItem("sur_data_nun", JSON.stringify(sur_data_nun));
+//      localStorage.setItem("sur_data_policy", JSON.stringify(sur_data_policy));
+//      localStorage.setItem("sur_data_applicant", JSON.stringify(sur_data_applicant));
+//      localStorage.setItem("sur_data_par", JSON.stringify(sur_data_par));
+// };
+// //删除本地存储内容
+// var deleteLocalStorage = function () {
+//     avalon.log('CONTROLLER:deleteLocalStorage：删除本地存储内容');
+//     localStorage.removeItem("sur_data_type");
+//     localStorage.removeItem("sur_data_nun");
+//     localStorage.removeItem("sur_data_policy");
+//     localStorage.removeItem("sur_data_applicant");
+//     localStorage.removeItem("sur_data_par");
+// };
+
+
+
+
+
+
+
+
+
+
+
+

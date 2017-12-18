@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>订单状态</title>
+    <link rel="stylesheet" href="./stylesheets/orderStatus.css">
+    <script src="javascripts/jquery.min.js"></script>
+</head>
+<body>
+    <div>
+        <img width="100%" id="success" style="display: none" src="./images/pay_succ_bg.png" alt="">
+        <img width="100%" id="error" style="display: none" src="./images/pay_fail_bg.png" alt="">
+    </div>
+    <div class="back" id="back">返回</div>
+
+</body>
+
+<script type="text/javascript">
+
+
+    $(document).ready(function () {
+
+        function getQueryString(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+            var r = window.location.search.substr(1).match(reg);
+            if (r != null)return unescape(r[2]);
+            return null;
+        }
+
+        var type;
+        type = getQueryString("OrderType");
+        if(type == "success"){
+            $("#success").css("display","block")
+        }else{
+            $("#error").css("display","block")
+        }
+
+        $("#back").click(function () {
+            location.href = "index.html"
+        })
+    })
+
+</script>
+</html>

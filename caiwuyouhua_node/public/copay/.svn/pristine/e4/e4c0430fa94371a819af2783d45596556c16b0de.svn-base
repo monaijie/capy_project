@@ -1,0 +1,362 @@
+/**
+ * Created by weicong on 17/10/16.
+ */ 
+var vm = {
+    naneForInsured: '',//被保人姓名
+    getSelectMyOrderIndex:0,//被选中的被保人下标
+    userInfo: {
+        policyType: 'NGB',
+        numNo: 43,
+        holder: '张三',
+        insured: 'Jeck Mei',
+        amount: 43
+    },
+    myOrder:[],
+    click: {
+        clearPayClick: function () {
+            console.log("CONTROLLER:clearPay()点击清除金额");
+            $("#pay").val("");
+        },
+        clearInsuranceNumberClick: function () {
+            console.log("CONTROLLER:clearInsuranceNumber()点击清除会员号");
+            $("#number").val("");
+        },
+        tipsClick: function () {
+            console.log("CONTROLLER:tipsClick()点击隐藏提示");
+            $("#tips").css("display", "none")
+        }
+    },
+    initcommitFormClick: function (callback) {
+        console.log("CONTROLLER:commitFormClick()点击支付按钮");
+        var that = vm;
+        that.userInfo.policyType = $('#Insurance_type').val();
+        that.userInfo.numNo = $('#number').val();
+        that.userInfo.holder = $('#policy_name').val();
+        that.userInfo.insured = $('#select').val();
+        that.userInfo.amount = $('#pay').val();
+        if (that.userInfo.policyType == "请选择") {
+            that.tips_msg("请选择保单类型");
+            return false
+        } else if (that.userInfo.numNo == "") {
+            that.tips_msg("请输入会员号或保单号");
+            return false
+        }
+        else if (that.userInfo.holder == "") {
+            that.tips_msg("投保人名称不能为空");
+            return false
+        }
+        else if (that.userInfo.insured == "") {
+            that.tips_msg("被保人名称不能为空");
+            return false
+        }
+        else if (that.userInfo.amount == "") {
+            that.tips_msg("请输入正确的支付金额");
+            return false
+        } else {
+            if (callback) {
+                callback(that.userInfo)
+            }
+        }
+    },
+    getOrderByFrom: function (userInfo) {
+        var that = this;
+        $('#type').text(userInfo.policyType);
+        $('#InsureNumber').text(userInfo.numNo);
+        $('#InsureName').text(userInfo.holder);
+        $('#payment').text(userInfo.amount);
+        $("#preview").css("display", "block");
+        var insured = $('#select option:selected').text();
+        that.getSelectMyOrderIndex = $('#select option:selected').val();//获取选择对应的下标
+        recognizeeName.innerHTML = insured;
+        vm.userInfo.insured = insured;
+    },
+    EncryptedInsuredPerson: function (nameEncrypted) {
+        console.log("CONTROLLER:EncryptedInsuredPerson()对被保人姓名加密");
+        var patt = new RegExp(/^[\u4e00-\u9fa5]{2,}$/);//验证只能中文输入
+        var  that = this;
+        if (nameEncrypted) {
+            if(nameEncrypted.insured instanceof Array){
+                for (var i = 0; i < nameEncrypted.insured.length; i++) {
+                    if (nameEncrypted.insured[i]) {
+                        if (nameEncrypted.insured[i].length > 2) {
+                            console.log("被保人姓名长度大于2" + nameEncrypted.insured[i]);
+                            for (var j = 0; j < nameEncrypted.insured[0].length; j++) {
+                                var last = nameEncrypted.insured[i].length - 1;
+                                if (j > 0 && j < last) {
+                                    if (patt.test(nameEncrypted.insured[i])) {
+                                        if (last > 2) {
+                                            nameEncrypted.insured[i] = nameEncrypted.insured[i][0] + "**" + nameEncrypted.insured[i][last];
+                                        } else {
+                                            nameEncrypted.insured[i] = nameEncrypted.insured[i][0] + "*" + nameEncrypted.insured[i][last];
+                                        }
+                                    }else{
+                                    }
+                                }
+                            }
+                        } else {
+                            console.log("被保人姓名长度小于2" + nameEncrypted.insured[i]);
+                            if (patt.test(nameEncrypted.insured[i])) {
+                                nameEncrypted.insured[i] = "*" + nameEncrypted.insured[i][1];
+                            }else{
+                            }
+                            console.log("获取加密的被保人姓名");
+                            console.log(nameEncrypted);
+                        }
+                    }
+                }
+                return nameEncrypted
+            }else {
+                if(nameEncrypted.insured.length == 2){
+                    nameEncrypted.insured = "*" + nameEncrypted.insured[1];
+                }else if(nameEncrypted.insured.length == 3){
+                    nameEncrypted.insured =nameEncrypted.insured[0] + "*" + nameEncrypted.insured[2];
+                }else{
+                    nameEncrypted.insured =nameEncrypted.insured[0] + "**" + nameEncrypted.insured[nameEncrypted.insured.length];
+                }
+                return nameEncrypted
+            }
+        } else {
+            return nameEncrypted
+        }
+    },
+    InsuranceTypechange: function (callback) {
+        console.log("CONTROLLER:InsuranceTypechange()监听保单类型");
+        var Insuranceype = $('#Insurance_type').val();
+        var policyType = null;
+        if (Insuranceype == '高端医疗险') {
+            policyType = 'GHB'
+        } else if (Insuranceype == '团体医疗险') {
+            policyType = 'NGB'
+        } else if (Insuranceype == '个人高端医疗险') {
+            policyType = 'IPMI'
+        }
+        if (callback) {
+            callback(policyType)
+        }
+        console.log(policyType);
+    },
+    clearnumber: function () {
+        var that = this
+        console.log("CONTROLLER:clearnumber()强制先选择报单类型");
+        var Insuranceype = $('#Insurance_type').val();
+        if (Insuranceype == '请选择') {
+            that.tips_msg("请先选择保单类型");
+            $("#number").val('')
+        }
+    },
+    numberFilling: function (callback) {
+        console.log("CONTROLLER:numberFilling()监听会员号或保单号");
+        var number = $("#number").val();
+        if (number != "") {
+            $("#clearInsuranceNumber").css("display", "block")
+        } else {
+            $("#clearInsuranceNumber").css("display", "none")
+        }
+        if (callback) {
+            callback(number)
+        }
+        console.log(number)
+    },
+    InsuranceType: function () {
+        console.log("CONTROLLER:InsuranceType()输入框失去焦点后调用接口");
+        var that = this;
+        that.InsuranceTypechange(function (type) {
+            console.log("输入框失去焦点后InsuranceTypechange返回" + type);
+            that.numberFilling(function (number) {
+                console.log("输入框失去焦点后numberFilling返回" + number);
+                if (number != '' && type != null) {
+                    that.getUserInfo(type, number, function (name) {
+                        console.log("getUserInfo:获取数据name");
+                        console.log(name);
+                        that.initGetUserInfoToUi(that.EncryptedInsuredPerson(name));
+                    })
+                }
+            })
+        });
+    },
+    getUserInfo: function (type, number, callback) {
+        console.log("CONTROLLER:getUserInfo()获取被保人姓名");
+        var that = this;
+        var dataToPost = {
+            policyType: type,
+            numNo: number
+        };
+        that.getInfo(dataToPost, function (data) {
+            if (data.respCode == '00') {
+                if (callback) {
+                    callback(data.respData)
+                }
+                console.log("CONTROLLER:getUserInfo()获取被保人姓名");
+                console.log(data.respData.insured);
+                console.log("CONTROLLER:getUserInfo()获取投保人姓名");
+                console.log(data.respData.holder)
+            } else if(data.respCode == '01'){
+                that.tips_msg(data.respDesc)
+            } else {
+            		that.tips_msg('暂未查询到相关信息')
+                that.userInfo.holder = '';
+                that.userInfo.insured = '';
+                $("#policy_name").val('');
+                $("#select").val('');
+            }
+        }, function (error) {
+            console.log(error)
+        });
+    },
+    getInfo: function (json, success, fail) {
+        console.log("CONTROLLER:getInfo()获取支付订单信息接口");
+        var that = this;
+        $.ajax({
+            url: '/copay/getInfo',
+            type: 'post',
+            timeout: 180000,
+            data: json,
+            dataType: 'json',
+            success: function (data) {
+                console.log("getInfo:success");
+                if (success) {
+                    success(data)
+                }
+            },
+            error: function (res) {
+                console.log("getInfo:fail");
+                if (fail) {
+                    fail(res);
+                }
+                that.tips_msg('系统超时，请重试')
+            }
+        });
+    },
+    placeDrder: function (userInfo) {
+        console.log("CONTROLLER:placeDrder()点击提交调用的数据");
+        var that = this;
+        var dataToPost = userInfo;
+        console.log(dataToPost);
+        that.submitInfo(dataToPost, function (data) {
+            console.log("CONTROLLER:submitInfo()点击提交返回的数据");
+            console.log(data);
+            if (data.respCode == '00') {
+                location.href = data.respData;
+                console.log("submitInfo:success");
+            } else {
+                console.log("submitInfo:fail");
+                document.getElementById("preview").style.display = 'none';
+                that.tips_msg(data.respDesc);
+            }
+        }, function (error) {
+            console.log(error)
+        });
+    },
+    submitInfo: function (json, success, fail) {
+        console.log("CONTROLLER:submitInfo()提交信息接口");
+        var that = this;
+        $.ajax({
+            url: '/copay/submitInfo',
+            type: 'post',
+            timeout: 180000,
+            data: json,
+            dataType: 'json',
+            success: function (data) {
+                console.log("submitInfo:success");
+                success(data)
+            },
+            error: function (res) {
+                console.log("submitInfo:fail");
+                fail(res);
+                that.tips_msg('系统超时，请重试')
+            }
+        });
+    },
+    clearNmu:function () {
+        var that = this;
+        $("#number").val('');
+        $("#policy_name").val('');
+        $("#select").val('');
+        $('#pay').val('')
+    },
+    initGetUserInfoToUi: function (name) {
+        console.log("CONTROLLER:initGetUserInfoToUi()赋值前的数据");
+        console.log(name.insured);
+        var sel = document.getElementById("select");
+        var that = this;
+        sel.innerHTML = '';
+        var option = '';
+        if (name) {
+            if(name.insured instanceof Array){
+                for (var i = 0; i < name.insured.length; i++) {
+                    option = new Option(name.insured[i], i);
+                    option.value = i;
+                    sel.options.add(option);
+                }
+            }else{
+                option = new Option(name.insured,0);
+                option.value = 0;
+                sel.options.add(option);
+            }
+        }
+        $('#policy_name').val(name.holder);
+    },
+    PayrChange: function () {
+        console.log("CONTROLLER:PayrChange()监听金额变化");
+        var that = this;
+        var pay = $("#pay").val();
+        pay = that.keepOnlyNumber(pay);
+        $("#pay").val(pay);
+        if (pay != "") {
+            $("#clearPay").css("display", "block")
+        } else {
+            $("#clearPay").css("display", "none")
+
+        }
+    },
+    keepOnlyNumber: function (value) {
+        console.log("CONTROLLER:keepOnlyNumber()只能输入数字和小数点");
+        value = value.toString();
+        var newstr;
+        // var regexp = /[^\d]]*/g;
+        var regexp = /[^0-9\/.]*/g;
+        newstr = value.replace(regexp, "");
+        return newstr
+    },
+    //显示隐藏弹窗
+    tips_msg: function (value) {
+        console.log("CONTROLLER:tips_msg()显示隐藏弹窗");
+        $("#msg").text(value);
+        $("#tips").css("display", "block");
+        setTimeout(function () {
+            document.getElementById("tips").style.display = 'none';
+        }, 3000)
+    }
+};
+var commitPayClick = function () {
+    console.log("CONROLLER:commitPayClick()点击确认支付按钮");
+    var that = vm;
+    that.InsuranceTypechange(function (type) {
+        console.log("输入框失去焦点后InsuranceTypechange返回" + type);
+        that.numberFilling(function (number) {
+            console.log("输入框失去焦点后numberFilling返回" + number);
+            if (number != '' && type != null) {
+                that.getUserInfo(type, number, function (name) {
+                   that.userInfo.policyType = type;
+                   that.userInfo.numNo = number;
+                   that.userInfo.holder = name.holder;
+                   if(name.insured instanceof Array){
+                       that.userInfo.insured = name.insured[that.getSelectMyOrderIndex];
+                   }else{
+                       that.userInfo.insured = name.insured
+                   }
+                   that.userInfo.amount = $('#pay').val();
+                    console.log(name.insured);
+                    that.placeDrder(that.userInfo);
+                })
+            }
+        })
+    });
+};
+var commitFormClick = function () {
+    console.log("CONROLLER:commitPayClick()点击支付按钮");
+    var that = vm;
+    that.initcommitFormClick(function (userInfo) {
+        that.getOrderByFrom(userInfo);
+    })
+};

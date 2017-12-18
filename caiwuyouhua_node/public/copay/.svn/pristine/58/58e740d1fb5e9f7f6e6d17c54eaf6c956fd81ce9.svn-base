@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>支付信息</title>
+</head>
+<link rel="stylesheet" href="./stylesheets/style.css">
+
+<body id="vm">
+<!--tips-->
+<div id="tips" class="shady_popup" onclick="vm.click.tipsClick()">
+    <div class="TipMain" id="msg">测试测试测试</div>
+</div>
+<!--Report Preview tips-->
+<div id="preview" class="report_preview">
+   <div class="preview_tip" id="msg_tip">
+       <div style="text-align: center;margin: 0.5rem 0;">请确认您填写的信息</div>
+       <div style="margin:0 10%">
+           您的保单类型是：<span id="type"></span><br>
+           您的保单号码是：<span id="InsureNumber"></span><br>
+           您的投保人名称：<span id="InsureName"></span><br>
+           您的被保人姓名：<span id="recognizeeName"></span><br>
+           您的支付金额是：<span id="payment"></span><br>
+       </div>
+       <div class="preview_btn" id="commitPay" onclick="commitPayClick()">确认支付</div>
+   </div>
+</div>
+<!--content-->
+<div>
+    <img width="100%" src="./images/pay_bg.png" alt="">
+</div>
+<div class="main">
+    <div class="body">
+        <div class="list">
+            <div class="laber">保单类型</div>
+            <div class="form_input">
+                <select name="Insurance_type" id="Insurance_type"   oninput="vm.clearNmu()">
+                    <option>请选择</option>
+                    <option>高端医疗险</option>
+                    <option>团体医疗险</option>
+                    <option>个人高端医疗险</option>
+                </select>
+                <img width="4%" style="top: 43%" src="./images/pay_cbb_btn.png" alt="">
+            </div>
+        </div>
+
+        <div class="list">
+            <div class="laber">会员号/保单号</div>
+            <div class="form_input">
+                <input type="text" name="Insurance_number" oninput="vm.clearnumber()" onblur="vm.InsuranceType()" id="number" placeholder="请输入" >
+                <img width="4%" style="display: none" id="clearInsuranceNumber"  src="./images/pay_de_btn.png" alt="" onclick="vm.click.clearInsuranceNumberClick()">
+            </div>
+        </div>
+
+        <div class="list">
+            <div class="laber" >投保人名称</div>
+            <div class="form_input">
+                <input type="text" name="policy_name" readonly="readonly" id="policy_name" >
+                <!--<div id="policy_name"></div>-->
+            </div>
+        </div>
+
+        <!--多个被保人-->
+        <div class="list" id="InsurancenameTwo">
+            <div class="laber">被保人姓名</div>
+            <div class="form_input">
+                <select name="Insurance_type" id="select"></select>
+                <img width="4%" style="top: 43%" src="./images/pay_cbb_btn.png" alt="" >
+            </div>
+        </div>
+
+        <div class="line"></div>
+        <div class="list">
+            <div class="laber">支付金额<span style="font-size: 0.8rem">(元)</span></div>
+            <div class="form_input">
+                <input type="text" id="pay" style="color: #3ca8ef" oninput="vm.PayrChange()" placeholder="请输入" name="pay">
+                <img width="4%" style="display: none" id="clearPay" src="./images/pay_de_btn.png" alt="" onclick="vm.click.clearPayClick()">
+            </div>
+        </div>
+    </div>
+    <div class="commitBtn" id="commitForm" onclick="commitFormClick()" >确认支付</div>
+</div>
+</body>
+</html>
+<script src="javascripts/jquery.min.js"></script>
+<script src="javascripts/index.js"></script>
